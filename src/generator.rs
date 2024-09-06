@@ -387,7 +387,7 @@ safe_drive = {safe_drive_dep}
         struct_def: &StructDef,
         lib: &str,
     ) {
-        self.idl_struct(lines, struct_def, lib);
+        self.idl_struct(lines, struct_def, lib, false);
         lines.push_back(gen_impl_for_struct(lib, "msg", &struct_def.id));
 
         lines.push_front("use safe_drive::{msg::TypeSupport, rcl::{self, size_t}};".into());
@@ -417,7 +417,7 @@ safe_drive = {safe_drive_dep}
         }
 
         // Generate struct.
-        self.idl_struct(lines, struct_def, lib);
+        self.idl_struct(lines, struct_def, lib, false);
         lines.push_back(gen_impl_for_struct(lib, "srv", &struct_def.id));
 
         IDLType::Srv(type_str.to_string())
@@ -464,7 +464,7 @@ safe_drive = {safe_drive_dep}
         }
 
         // Generate struct.
-        self.idl_struct(lines, struct_def, lib);
+        self.idl_struct(lines, struct_def, lib, true);
         lines.push_back(gen_impl_for_struct(lib, "action", &struct_def.id));
 
         match suffix {
@@ -583,9 +583,19 @@ safe_drive = {safe_drive_dep}
         Ok(())
     }
 
-    fn idl_struct(&mut self, lines: &mut VecDeque<String>, struct_def: &StructDef, lib: &str) {
+    fn idl_struct(
+        &mut self,
+        lines: &mut VecDeque<String>,
+        struct_def: &StructDef,
+        lib: &str,
+        clone: bool,
+    ) {
         lines.push_back("\n#[repr(C)]".to_string());
-        lines.push_back("#[derive(Debug)]".to_string());
+        if clone {
+            lines.push_back("#[derive(Clone, Debug)]".to_string());
+        } else {
+            lines.push_back("#[derive(Debug)]".to_string());
+        }
         lines.push_back(format!("pub struct {} {{", struct_def.id));
         for member in struct_def.members.iter() {
             self.idl_member(lines, member, lib);
